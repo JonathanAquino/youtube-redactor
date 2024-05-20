@@ -1,0 +1,36 @@
+<div class="container" style="width: 480px;">
+	<div id="player" data-plyr-provider="youtube" data-plyr-embed-id></div>
+</div>
+<div id="info">See the <a href="https://github.com/JonathanAquino/youtube-redactor">README</a> for how to use this page</div>
+<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<script>
+    // Parse a string like 120-130,140-150 into an array
+    // [{start: 120, end: 130}, {start: 140, end: 150]
+    const parseRedactions = (redactionString) => {
+        const redactions = [];
+        const redactionPairs = redactionString.split(',');
+        for (const redactionPair of redactionPairs) {
+            const [start, end] = redactionPair.split('-');
+            redactions.push({ start: parseInt(start), end: parseInt(end) });
+        }
+        return redactions;
+    };
+    const urlParams = new URLSearchParams(window.location.search);
+    const redactions = parseRedactions(urlParams.get('redact'));
+    const embedId = urlParams.get('embedId');
+    document.querySelector('#player').setAttribute('data-plyr-embed-id', embedId);
+    const player = new Plyr('#player', {
+        invertTime: false,
+    });
+    setInterval(() => {
+        const info = `${Math.round(player.currentTime)}s`;
+        document.querySelector('#info').innerHTML = info;
+        for (const redaction of redactions) {
+            if (player.currentTime >= redaction.start && player.currentTime <= redaction.end) {
+                player.currentTime = redaction.end + 1;
+            }
+        }
+    }, 100);
+    document.querySelector('#info').innerHTML = 'Playing';
+</script>
